@@ -106,40 +106,47 @@ mode_random_blips (double *fb,
 void
 mode_astern (double *framebuffer,
              double  t)
-{ 
+{
   static int wait_counter = -1;  // wait when finished
   static int finished_astern=0;  //
-  static int initiated_astern=0; 
-  
-  if(!initiated_astern) {
-	  initiated_astern = 1;
-	  init_astern();
-  }
+  static int initiated_astern=0;
+
+  if (!initiated_astern)
+    {
+      initiated_astern = 1;
+      init_astern ();
+    }
   if (!finished_astern)
     {
- 	render_map(framebuffer);
-	finished_astern = astern_step();
-	if(finished_astern < 0) {
-		// fail, no route found
-				
-		wait_counter = 0;
-		framebuffer_set(framebuffer, 1.0, 1.0, 1.0);
-	}
-
+      render_map(framebuffer);
+      finished_astern = astern_step();
+      if (finished_astern < 0)
+        {
+          // fail, no route found
+          wait_counter = 0;
+          framebuffer_set(framebuffer, 1.0, 1.0, 1.0);
+        }
     }
-   else {
-     if(wait_counter < 0) 
-	     wait_counter = 9;
-     if(wait_counter > 0) {
-       render_path(framebuffer);
-       wait_counter--;	     
-     } else { // == 0
-       destruct_astern();
-       initiated_astern = 0;
-       finished_astern = 0;
-       wait_counter = -1;
-     }
-   }
+  else
+    {
+      if (wait_counter < 0)
+        {
+          wait_counter = 9;
+        }
+
+      if (wait_counter > 0)
+        {
+          render_path (framebuffer);
+          wait_counter--;
+        }
+      else
+        { // == 0
+          destruct_astern ();
+          initiated_astern = 0;
+          finished_astern = 0;
+          wait_counter = -1;
+        }
+    }
 }
 
 void
@@ -161,7 +168,7 @@ mode_rect_flip (double *fb,
 
   pos = (int) (fmod (t, 6.0 * 2.0) / 2.0);
   dt  = fmod (t, 2.0) / 2.0;
- 
+
   dt = pow (dt, 3);
 
   dt = dt * M_PI / 2;
