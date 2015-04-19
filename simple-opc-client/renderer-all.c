@@ -356,9 +356,9 @@ main (int   argc,
       gettimeofday (&tv, NULL);
       t = tv.tv_sec * 1.0 + tv.tv_usec / 1000000.0;
 
-      if (argc > 1 && input_fd < 0 && t - last_js_test > 5)
+      if (input_fd < 0 && t - last_js_test > 5)
         {
-          input_fd = open (argv[1], O_RDONLY);
+          input_fd = open ("/dev/input/js0", O_RDONLY);
 
           last_js_test = t;
           pfd.events = POLLIN;
