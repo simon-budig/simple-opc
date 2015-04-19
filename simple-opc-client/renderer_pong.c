@@ -103,13 +103,13 @@ void render_pong (double  t,
 
   framebuffer_set (fb, 0.05, 0.0, 0.25);
 
-  render_blob (fb, px, py, pz, 0.0, 1.0, 0.0, 0.7, 1.5);
+  render_blob (fb, px, py, pz, 0.0, 1.0, 1.0, 0.7, 1.5);
   if (state == 1)
     render_paddle (fb, joy_x, joy_y, 0, 0.0, 1.0, 0.0, 7);
   else if (state == 2 || pz < 0.0)
     render_paddle (fb, joy_x, joy_y, 0, 1.0, 0.3, 0.0, 7);
 
-  render_paddle (fb, joy_x, joy_y, 0, 1.0, 0.0, 0.0, PADDLE_SIZE);
+  render_paddle (fb, joy_x, joy_y, 0, 1.0, 1.0, 0.0, PADDLE_SIZE);
 
   if (state == 1)
     state = 0;

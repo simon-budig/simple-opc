@@ -375,12 +375,12 @@ main (int   argc,
               switch ((e.type & 0x03) * 256 + e.number)
                 {
                   case 0x0203:
-                    /* X */
-                    joy_x = CLAMP (((float) e.value) / 23000.0, -1.0, 1.0);
-                    break;
-                  case 0x0204:
                     /* Y */
                     joy_y = CLAMP (((float) e.value) / 23000.0, -1.0, 1.0);
+                    break;
+                  case 0x0204:
+                    /* X */
+                    joy_x = - CLAMP (((float) e.value) / 23000.0, -1.0, 1.0);
                     break;
                 }
             }
