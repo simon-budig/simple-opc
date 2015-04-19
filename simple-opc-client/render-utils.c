@@ -5,19 +5,20 @@
 double
 euclid_3d (double x,
            double y,
-	   double z)
+           double z)
 {
-	return sqrt (x * x + y * y + z * z);
+   return sqrt (x*x + y*y + z*z);
 }
+
 
 void
 pixel_set (double *framebuffer,
-           int x,
-           int y,
-           int z,
-           double red,
-           double green,
-           double blue)
+           int     x,
+           int     y,
+           int     z,
+           double  red,
+           double  green,
+           double  blue)
 {
   if (x < 0 || y < 0 || z < 0)
     return;
@@ -33,13 +34,13 @@ pixel_set (double *framebuffer,
 
 void
 render_pixel (double *framebuffer,
-              int x,
-              int y,
-              int z,
-              double red,
-              double green,
-              double blue,
-              double alpha)
+              int     x,
+              int     y,
+              int     z,
+              double  red,
+              double  green,
+              double  blue,
+              double  alpha)
 {
   if (x < 0 || y < 0 || z < 0)
     return;
@@ -60,13 +61,13 @@ render_pixel (double *framebuffer,
 
 void
 interpolate_pixel (double *fb,
-                   double x,
-                   double y,
-                   double z,
-                   double red,
-                   double green,
-                   double blue,
-                   double alpha)
+                   double  x,
+                   double  y,
+                   double  z,
+                   double  red,
+                   double  green,
+                   double  blue,
+                   double  alpha)
 {
   render_pixel (fb,
                 (int) x,
@@ -189,10 +190,44 @@ render_blob (double *framebuffer,
 
 
 void
+render_paddle (double *framebuffer,
+               double  x,
+               double  y,
+               double  z,
+               double  red,
+               double  green,
+               double  blue,
+               double  size)
+{
+  int ix, iy;
+
+  x *= 4;
+  y *= 4;
+  size *= 4;
+
+  ix = (int) (x - size/2);
+  iy = (int) (y - size/2);
+
+  for (iy = (int) (y - size/2); iy < y + size/2 + 1; iy ++)
+    {
+      for (ix = (int) (x - size/2); ix < x + size/2 + 1; ix ++)
+        {
+          double alpha =
+              (CLAMP (size - ABS (((double) ix) - x), 0.0, 1.0) *
+               CLAMP (size - ABS (((double) iy) - y), 0.0, 1.0));
+
+          render_pixel (framebuffer, ix, iy, ROUND (z),
+                        red, green, blue, alpha);
+        }
+    }
+}
+
+
+void
 framebuffer_set (double *framebuffer,
-                 double red,
-                 double green,
-                 double blue)
+                 double  red,
+                 double  green,
+                 double  blue)
 {
   int x, y, z;
 
@@ -211,7 +246,7 @@ framebuffer_set (double *framebuffer,
 
 void
 framebuffer_dim (double *framebuffer,
-                 double alpha)
+                 double  alpha)
 {
   int i;
 
@@ -224,7 +259,7 @@ void
 framebuffer_merge (double *fb,
                    double *effect1,
                    double *effect2,
-                   double alpha)
+                   double  alpha)
 {
   int i;
 

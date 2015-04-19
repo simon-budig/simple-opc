@@ -5,21 +5,32 @@
 #include <math.h>
 #include <netinet/in.h>
 #include <sys/time.h>
+#include <time.h>
+
+#include <fcntl.h>
+#include <poll.h>
+#include <linux/joystick.h>
 
 #include "opc-client.h"
 #include "render-utils.h"
 
 #include "renderer_astern.h"
 #include "renderer_ball.h"
+#include "renderer_pong.h"
 
 #define EFFECT_TIME 30.0
 
-typedef void (*RenderFunc) (double *, double);
+typedef void (*RenderFunc) (double *framebufer,
+                            double  time,
+                            double  joy_x,
+                            double  joy_y);
 
 
 void
 mode_jumping_pixels (double *fb,
-                     double  t)
+                     double  t,
+                     double  joy_x,
+                     double  joy_y)
 {
   static double *offsets = NULL;
   int i, x, y;
@@ -54,7 +65,9 @@ mode_jumping_pixels (double *fb,
 
 void
 mode_lava_balloon (double *fb,
-                   double  t)
+                   double  t,
+                   double  joy_x,
+                   double  joy_y)
 {
   int X, Y;
 
@@ -86,7 +99,9 @@ mode_lava_balloon (double *fb,
 
 void
 mode_random_blips (double *fb,
-                   double  t)
+                   double  t,
+                   double  joy_x,
+                   double  joy_y)
 {
   int x, y, z, i;
   framebuffer_dim (fb, 0.99);
@@ -105,7 +120,9 @@ mode_random_blips (double *fb,
 
 void
 mode_astern (double *framebuffer,
-             double  t)
+             double  t,
+             double  joy_x,
+             double  joy_y)
 {
   static int wait_counter = -1;  // wait when finished
   static int finished_astern=0;  //
@@ -151,15 +168,29 @@ mode_astern (double *framebuffer,
 
 void
 mode_ball_wave (double *fb,
-                double  t)
+                double  t,
+                double  joy_x,
+                double  joy_y)
 {
   render_ball (t,fb);
 }
 
 
 void
+mode_pong (double *fb,
+           double  t,
+           double  joy_x,
+           double  joy_y)
+{
+  render_pong (t, fb, joy_x, joy_y);
+}
+
+
+void
 mode_rect_flip (double *fb,
-                double  t)
+                double  t,
+                double  joy_x,
+                double  joy_y)
 {
   int x, y, z;
   double dt, sdt, cdt;
@@ -275,7 +306,12 @@ main (int   argc,
   OpcClient *client;
   int mode = 0;
   int have_flip = 0;
-  RenderFunc modeptrs[] =
+  int input_fd = -1;
+  struct pollfd pfd;
+  double joy_x, joy_y;
+  double last_js_test = 0;
+
+  RenderFunc modeptrs_nojs[] =
     {
       mode_astern,
       mode_lava_balloon,
@@ -285,13 +321,23 @@ main (int   argc,
       mode_ball_wave,
     };
 
-  int num_modes = sizeof (modeptrs) / sizeof (modeptrs[0]);
+  int num_modes_nojs = sizeof (modeptrs_nojs) / sizeof (modeptrs_nojs[0]);
+
+  RenderFunc modeptrs_js[] =
+    {
+      mode_pong,
+    };
+
+  int num_modes_js = sizeof (modeptrs_js) / sizeof (modeptrs_js[0]);
+
+  RenderFunc *modeptrs;
+  int num_modes;
 
   framebuffer = calloc (8 * 8 * 8 * 3, sizeof (double));
   effect1 = calloc (8 * 8 * 8 * 3, sizeof (double));
   effect2 = calloc (8 * 8 * 8 * 3, sizeof (double));
 
-  client = opc_client_new ("localhost:7890", 7890,
+  client = opc_client_new ("127.0.0.1:7890", 7890,
                            8 * 8 * 8 * 3,
                            framebuffer);
 
@@ -302,15 +348,64 @@ main (int   argc,
     }
   opc_client_connect (client);
 
+  srand48 (time (NULL));
+
   while (1)
     {
       double t, dt;
       gettimeofday (&tv, NULL);
       t = tv.tv_sec * 1.0 + tv.tv_usec / 1000000.0;
 
+      if (argc > 1 && input_fd < 0 && t - last_js_test > 5)
+        {
+          input_fd = open (argv[1], O_RDONLY);
+
+          last_js_test = t;
+          pfd.events = POLLIN;
+          pfd.fd = input_fd;
+        }
+
+      while (input_fd >= 0 && poll (&pfd, 1, 0) > 0)
+        {
+          struct js_event e;
+
+          if (pfd.revents & POLLIN &&
+              read (input_fd, &e, sizeof (e)) > 0)
+            {
+              switch ((e.type & 0x03) * 256 + e.number)
+                {
+                  case 0x0203:
+                    /* X */
+                    joy_x = CLAMP (((float) e.value) / 23000.0, -1.0, 1.0);
+                    break;
+                  case 0x0204:
+                    /* Y */
+                    joy_y = CLAMP (((float) e.value) / 23000.0, -1.0, 1.0);
+                    break;
+                }
+            }
+          else
+            {
+              close (input_fd);
+              last_js_test = t;
+              input_fd = -1;
+            }
+        }
+
+      if (input_fd < 0)
+        {
+          modeptrs = modeptrs_nojs;
+          num_modes = num_modes_nojs;
+        }
+      else
+        {
+          modeptrs = modeptrs_js;
+          num_modes = num_modes_js;
+        }
+
       dt = fmod (t, EFFECT_TIME);
 
-      if (dt < 1.0)
+      if (num_modes > 1 && dt < 1.0)
         {
           if (have_flip == 1)
             {
@@ -318,8 +413,8 @@ main (int   argc,
               have_flip = 0;
             }
 
-          modeptrs[(mode + 0) % num_modes] (effect1, t);
-          modeptrs[(mode + 1) % num_modes] (effect2, t);
+          modeptrs[(mode + 0) % num_modes] (effect1, t, joy_x, joy_y);
+          modeptrs[(mode + 1) % num_modes] (effect2, t, joy_x, joy_y);
 
           framebuffer_merge (framebuffer, effect1, effect2, dt);
         }
@@ -338,7 +433,7 @@ main (int   argc,
               have_flip = 1;
             }
 
-          modeptrs[(mode + 0) % num_modes] (effect1, t);
+          modeptrs[(mode + 0) % num_modes] (effect1, t, joy_x, joy_y);
           framebuffer_merge (framebuffer, effect1, effect2, 0.0);
         }
 
