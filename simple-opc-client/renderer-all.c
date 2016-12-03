@@ -20,6 +20,17 @@
 
 #define EFFECT_TIME 30.0
 
+static double colors[] = {
+  1.0,   0,   0,
+    0, 1.0,   0,
+    0,   0, 1.0,
+  1.0, 1.0,   0,
+  1.0,   0, 1.0,
+    0, 1.0, 1.0,
+};
+
+#define NUM_COLORS 6
+
 typedef void (*RenderFunc) (double *framebufer,
                             double  time,
                             double  joy_x,
@@ -165,6 +176,97 @@ mode_astern (double *framebuffer,
         }
     }
 }
+
+
+void
+mode_2d_enum (double *fb,
+              double  t,
+              double  joy_x,
+              double  joy_y)
+{
+  int ti = (int) fmod (t * 20, 512);
+  int i;
+
+  for (i = 0; i < ti; i++)
+    {
+      render_pixel_2d (fb, i % 32, i / 32,
+                       1.0, 0.0, 0.0, 1.0);
+    }
+  for (i = ti; i < 512; i++)
+    {
+      render_pixel_2d (fb, i % 32, i / 32,
+                       0.0, 1.0, 0.0, 1.0);
+    }
+}
+
+
+void
+mode_2d_circles (double *fb,
+                 double  t,
+                 double  joy_x,
+                 double  joy_y)
+{
+  static double t0 = 0;
+  static int num_circles = 0;
+  static double cx[7] = { 0, };
+  static double cy[7] = { 0, };
+  static double cr[7] = { 0, };
+  static int    cc[7] = { 0, };
+
+  int i, j, x, y;
+
+  if (t0 == 0)
+    t0 = t;
+
+  if (num_circles == 0 ||
+      (num_circles < 7 && (random() % 24) < 1))
+    {
+      cx[num_circles] = drand48 () * 32;
+      cy[num_circles] = drand48 () * 16;
+      cr[num_circles] = 0;
+      cc[num_circles] = random () % NUM_COLORS;
+      num_circles += 1;
+    }
+
+  framebuffer_set (fb, 0.3, 0.0, 0.0);
+
+  for (y = 0; y < 16; y++)
+    {
+      for (x = 0; x < 32; x++)
+        {
+          for (i = 0; i < num_circles; i++)
+            {
+              double d = hypot (x - cx[i], y - cy[i]);
+              if (fabs (d - cr[i]) < 1.5)
+                {
+                  render_pixel_2d (fb, x, y,
+                                   colors[cc[i]*3 + 0],
+                                   colors[cc[i]*3 + 1],
+                                   colors[cc[i]*3 + 2],
+                                   1.0 - fabs (d - cr[i]) / 1.5);
+                }
+            }
+        }
+    }
+
+  j = 0;
+  for (i = 0; i < num_circles; i++)
+    {
+      cx[j] = cx[i];
+      cy[j] = cy[i];
+      cr[j] = cr[i] + (t - t0);
+      cc[j] = cc[i];
+
+      if (cr[j] < 36)
+        {
+          j ++;
+        }
+    }
+  num_circles = j;
+
+  t0 = t;
+}
+
 
 void
 mode_ball_wave (double *fb,
@@ -313,7 +415,8 @@ main (int   argc,
 
   RenderFunc modeptrs_nojs[] =
     {
-      mode_astern,
+      // mode_astern,
+      mode_2d_circles,
       mode_lava_balloon,
       mode_jumping_pixels,
       mode_random_blips,

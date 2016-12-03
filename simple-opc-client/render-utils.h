@@ -20,6 +20,11 @@ void render_pixel      (double *framebuffer,
                         double red, double green, double blue,
                         double alpha);
 
+void render_pixel_2d   (double *framebuffer,
+                        int x, int y,
+                        double red, double green, double blue,
+                        double alpha);
+
 void interpolate_pixel (double *framebuffer,
                         double x, double y, double z,
                         double red, double green, double blue,

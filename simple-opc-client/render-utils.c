@@ -60,6 +60,72 @@ render_pixel (double *framebuffer,
 
 
 void
+render_pixel_2d (double *framebuffer,
+                 int     x,
+                 int     y,
+                 double  red,
+                 double  green,
+                 double  blue,
+                 double  alpha)
+{
+  int index;
+
+  if (x < 0 || y < 0)
+    return;
+
+  if (x >= 32 || y >= 16)
+    return;
+
+  if (y < 8)
+    {
+      if (x < 8)
+        {
+          index = 4 * 64 + (7 - (x % 8)) * 8 + 7 - (y % 8);
+        }
+      else if (x < 16)
+        {
+          index = 6 * 64 + (x % 8) * 8 + 7 - (y % 8);
+        }
+      else if (x < 24)
+        {
+          index = 0 * 64 + (7 - (x % 8)) * 8 + 7 - (y % 8);
+        }
+      else
+        {
+          index = 2 * 64 + (x % 8) * 8 + 7 - (y % 8);
+        }
+    }
+  else
+    {
+      if (x < 8)
+        {
+          index = 5 * 64 + (7 - (x % 8)) * 8 + (y % 8);
+        }
+      else if (x < 16)
+        {
+          index = 7 * 64 + (x % 8) * 8 + (y % 8);
+        }
+      else if (x < 24)
+        {
+          index = 1 * 64 + (7 - (x % 8)) * 8 + (y % 8);
+        }
+      else
+        {
+          index = 3 * 64 + (x % 8) * 8 + (y % 8);
+        }
+    }
+  framebuffer[index * 3 + 0] *= 1.0   - alpha;
+  framebuffer[index * 3 + 0] += red   * alpha;
+
+  framebuffer[index * 3 + 1] *= 1.0   - alpha;
+  framebuffer[index * 3 + 1] += green * alpha;
+
+  framebuffer[index * 3 + 2] *= 1.0   - alpha;
+  framebuffer[index * 3 + 2] += blue  * alpha;
+}
+
+
+void
 interpolate_pixel (double *fb,
                    double  x,
                    double  y,
