@@ -38,6 +38,64 @@ typedef void (*RenderFunc) (double *framebufer,
 
 
 void
+mode_import_png (double *fb,
+                 double  t,
+                 double  joy_x,
+                 double  joy_y)
+{
+  double *pixels, *cfp;
+  int width, height, rowstride;
+  int x, y;
+  double x1, y1, x2, y2, angle;
+
+  if (read_png_file ("lauftext-balldachin.png",
+                     &width, &height, &rowstride, &pixels) < 0)
+    {
+      fprintf (stderr, "failed to read PNG\n");
+      return;
+    }
+
+  if (width < 32 || height < 31)
+    {
+      fprintf (stderr, "PNG not big enough\n");
+      return;
+    }
+
+  for (y = 0; y < 32; y++)
+    {
+      for (x = 0; x < 16; x++)
+        {
+          cfp = fb + (y * 16 + x) * 3;
+
+          x1 = 16 + x - ((y+1) / 2);
+          y1 = 30 - (y / 2) - x;
+
+          x1 -= 16;
+          y1 -= 16;
+
+          y1 += 3;
+
+          angle = fmod (t / 16, 2 * M_PI);
+          x2 = cos (angle) * x1 - sin (angle) * y1;
+          y2 = sin (angle) * x1 + cos (angle) * y1;
+          x1 = x2;
+          y1 = y2;
+
+          x1 += fmod (t, 3 * EFFECT_TIME) * (width + 32) / (3 * EFFECT_TIME);
+          x1 -= 32;
+
+          x1 += 16;
+          y1 += 16;
+
+          sample_buffer (pixels, width, height, rowstride, x1, y1, cfp);
+        }
+    }
+
+  free (pixels);
+}
+
+
+void
 mode_jumping_pixels (double *fb,
                      double  t,
                      double  joy_x,
@@ -420,6 +478,7 @@ main (int   argc,
       mode_2d_circles,
       mode_lava_balloon,
       mode_jumping_pixels,
+      mode_import_png,
       mode_random_blips,
       mode_rect_flip,
       mode_ball_wave,
