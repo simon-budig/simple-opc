@@ -135,24 +135,25 @@ mode_astern (double *framebuffer,
              double  joy_x,
              double  joy_y)
 {
-  static int wait_counter = -1;  // wait when finished
-  static int finished_astern=0;  //
-  static int initiated_astern=0;
+  static int wait_counter = -1;    // wait when finished
+  static int finished_astern = 0;  //
+  static int initiated_astern = 0;
 
   if (!initiated_astern)
     {
       initiated_astern = 1;
       init_astern ();
     }
+
   if (!finished_astern)
     {
-      render_map(framebuffer);
-      finished_astern = astern_step();
+      render_map (framebuffer);
+      finished_astern = astern_step ();
       if (finished_astern < 0)
         {
           // fail, no route found
           wait_counter = 0;
-          framebuffer_set(framebuffer, 1.0, 1.0, 1.0);
+          framebuffer_set (framebuffer, 1.0, 1.0, 1.0);
         }
     }
   else
