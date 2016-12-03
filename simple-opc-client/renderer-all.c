@@ -440,7 +440,7 @@ main (int   argc,
   effect1 = calloc (8 * 8 * 8 * 3, sizeof (double));
   effect2 = calloc (8 * 8 * 8 * 3, sizeof (double));
 
-  client = opc_client_new ("127.0.0.1:7890", 7890,
+  client = opc_client_new (argc > 1 ? argv[1] : "127.0.0.1:7890", 7890,
                            8 * 8 * 8 * 3,
                            framebuffer);
 

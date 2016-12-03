@@ -57,8 +57,21 @@ void framebuffer_merge (double *fb,
                         double *effect2,
                         double  alpha);
 
-
-double  euclid_3d      (double x,
+double euclid_3d       (double x,
                         double y,
                         double z);
+
+int read_png_file      (char    *file_name,
+                        int     *width,
+                        int     *height,
+                        int     *rowstride,
+                        double **pixels);
+
+void sample_buffer     (double  *buffer,
+                        int      width,
+                        int      height,
+                        int      rowstride,
+                        double   x,
+                        double   y,
+                        double  *ret_pixel);
 
