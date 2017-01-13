@@ -1,3 +1,5 @@
+/** Standalone Renderer for the A* algorithm visualisation */
+
 #include "opc-client.h"
 #include "render-utils.h"
 #include "renderer_astern.h"

@@ -1,3 +1,12 @@
+/** 
+ Calculation and display of A* Algorithm from one corner to the next.
+ Please use 
+ init_astern and destruct_astern to setup and tear down data structures
+ used in the algorithms steps (astern_step).
+ To paint the current state of the algorithm call render_map. The
+ function render_path will light up a found path (backtracking the
+ route_from field from dest).
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
